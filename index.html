@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+     <title>Senin İçin 🌸</title>
+  <style>
+     body {
+      margin: 0;
+      background: #10131a;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<canvas id="flowerCanvas"></canvas>
+<script>
+const canvas = document.getElementById("flowerCanvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+class Firefly {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height * 0.7;
+    this.radius = Math.random() * 1.6 + 1;
+    this.speedX = (Math.random() - 0.5) * 0.16;
+    this.speedY = (Math.random() - 0.5) * 0.16;
+    this.alpha = Math.random() * 0.5 + 0.5;
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+    if (this.y < 0 || this.y > canvas.height * 0.8) this.speedY *= -1;
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.alpha * (0.5 + 0.5*Math.sin(Date.now()/900 + this.x));
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#e0f7ff";
+    ctx.shadowColor = "#b0f0ff";
+    ctx.shadowBlur = 14;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+}
+
+// Arka plan parıltıları için sınıf
+class BackgroundGlow {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.radius = 10 + Math.random() * 15;
+    this.baseAlpha = 0.1 + Math.random() * 0.15;
+    this.alpha = this.baseAlpha;
+    this.alphaSpeed = 0.002 + Math.random() * 0.003;
+    this.alphaDirection = 1;
+  }
+  update() {
+    this.alpha += this.alphaSpeed * this.alphaDirection;
+    if(this.alpha >= this.baseAlpha + 0.12 || this.alpha <= this.baseAlpha - 0.12) {
+      this.alphaDirection *= -1;
+    }
+  }
+  draw() {
+    let grad = ctx.createRadialGradient(this.x, this.y, this.radius * 0.6, this.x, this.y, this.radius);
+    grad.addColorStop(0, `rgba(180,230,255,${this.alpha})`);
+    grad.addColorStop(1, `rgba(180,230,255,0)`);
+    ctx.save();
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+let fireflies = [];
+for (let i = 0; i < 18; i++) fireflies.push(new Firefly());
+
+let bgGlows = [];
+for(let i=0; i < 50; i++) {
+  bgGlows.push(new BackgroundGlow());
+}
+
+function drawElegantLeaf(x, y, size, angle, flip=false, alpha=0.85) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  if(flip) ctx.scale(-1, 1);
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(
+    size * 0.45, size * 0.18,
+    size * 0.45, size * 0.82,
+    0, size
+  );
+  ctx.bezierCurveTo(
+    -size * 0.45, size * 0.82,
+    -size * 0.45, size * 0.18,
+    0, 0
+  );
+  ctx.closePath();
+
+  ctx.fillStyle = "rgba(135, 220, 255," + alpha + ")";
+  ctx.shadowColor = "rgba(100, 200, 255, 0.8)";
+  ctx.shadowBlur = 10;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, size);
+  for(let i = 0.3; i <= 0.7; i += 0.2) {
+    let yPos = size * i;
+    let xOffset = size * 0.2 * Math.sin(i * Math.PI);
+    ctx.moveTo(-xOffset, yPos);
+    ctx.lineTo(xOffset, yPos);
+  }
+  ctx.strokeStyle = "rgba(180,230,255,0.15)";
+  ctx.lineWidth = 0.7;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawFlowerHead(x, y, scale, open, petalCount = 6) {
+  let petalLen = 58 * scale * open;
+  let petalWid = 28 * scale * open;
+
+  for (let i = 0; i < petalCount; i++) {
+    let angle = (i * Math.PI * 2) / petalCount;
+    let px = x + Math.cos(angle) * 16 * scale * open;
+    let py = y + Math.sin(angle) * 16 * scale * open;
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(angle);
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.bezierCurveTo(
+      petalWid * 0.35, -petalLen * 0.25,
+      petalWid * 0.7, -petalLen * 0.65,
+      0, -petalLen
+    );
+    ctx.bezierCurveTo(
+      -petalWid * 0.7, -petalLen * 0.65,
+      -petalWid * 0.35, -petalLen * 0.25,
+      0, 0
+    );
+    ctx.closePath();
+
+    let grad = ctx.createLinearGradient(0, 0, 0, -petalLen);
+    grad.addColorStop(0, "rgba(255, 105, 180, 0.95)");
+    grad.addColorStop(0.4, "rgba(255, 20, 147, 0.9)");
+    grad.addColorStop(0.8, "rgba(199, 21, 133, 0.8)");
+    grad.addColorStop(1, "rgba(180, 12, 110, 0.7)");
+
+    ctx.fillStyle = grad;
+    ctx.shadowColor = "rgba(255, 105, 180, 0.7)";
+    ctx.shadowBlur = 12;
+    ctx.globalAlpha = 0.9;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  ctx.save();
+  let grad2 = ctx.createRadialGradient(x, y, 0, x, y, 12*scale*open);
+  grad2.addColorStop(0, "#fff0f6");
+  grad2.addColorStop(0.6, "#ffc0cb");
+  grad2.addColorStop(1, "#ff69b4");
+
+  ctx.beginPath();
+  ctx.arc(x, y, 12 * scale * open, 0, Math.PI * 2);
+  ctx.fillStyle = grad2;
+  ctx.shadowColor = "rgba(255,182,193,0.6)";
+  ctx.shadowBlur = 10;
+  ctx.globalAlpha = 0.9;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawGlow(x, y, radius, color, alpha) {
+  let grad = ctx.createRadialGradient(x, y, radius * 0.6, x, y, radius);
+  grad.addColorStop(0, `rgba(${color.r},${color.g},${color.b},${alpha * 0.6})`);
+  grad.addColorStop(0.7, `rgba(${color.r},${color.g},${color.b},${alpha * 0.1})`);
+  grad.addColorStop(1, `rgba(${color.r},${color.g},${color.b},0)`);
+  ctx.save();
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// t parametresi 0 ile 1 arasında sap boyunca konumu verir
+function getPointOnStem(baseX, baseY, dx, len, curve, flowerX, flowerY, t) {
+  let x1 = baseX;      // Sap tabanı birleşik olduğu için sadece baseX
+  let y1 = baseY;
+  let cx = baseX + curve;
+  let cy = baseY - len / 2;
+  let x2 = baseX + dx + flowerX;
+  let y2 = baseY + flowerY;
+
+  // İkinci derece Bezier eğrisi
+  let x = (1 - t)*(1 - t)*x1 + 2*(1 - t)*t*cx + t*t*x2;
+  let y = (1 - t)*(1 - t)*y1 + 2*(1 - t)*t*cy + t*t*y2;
+  return {x, y};
+}
+
+let openProgress = 0;    // Çiçeğin açılma oranı 0-1
+let stemGrowProgress = 0; // Sapın büyüme animasyon oranı 0-1
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Arka plan parıltılarını güncelle ve çiz
+  bgGlows.forEach(g => { g.update(); g.draw(); });
+
+  fireflies.forEach(f => { f.update(); f.draw(); });
+
+  if (stemGrowProgress < 1) stemGrowProgress += 0.007;
+  if (openProgress < 1 && stemGrowProgress > 0.5) openProgress += 0.01;
+
+  let baseX = canvas.width / 2;
+  let baseY = canvas.height * 0.96;
+
+  let stems = [
+    {dx: -68, len: 270, curve: -30, flowerY: -270, flowerX: -30, flowerScale: 1.15},
+    {dx: 0, len: 360, curve: 0, flowerY: -360, flowerX: 0, flowerScale: 1.4},
+    {dx: 68, len: 270, curve: 30, flowerY: -270, flowerX: 30, flowerScale: 1.15}
+  ];
+
+  let glowAlpha = 0.6 + 0.4 * Math.sin(Date.now() / 700);
+  stems.forEach(s => {
+    let flowerX = baseX + s.dx * stemGrowProgress + s.flowerX * stemGrowProgress;
+    let flowerY = baseY - s.len * stemGrowProgress;
+    drawGlow(flowerX, flowerY, 60 * s.flowerScale, {r:255, g:105, b:180}, glowAlpha);
+  });
+
+  stems.forEach(s => {
+    ctx.save();
+    ctx.strokeStyle = "rgba(55,255,232,0.85)";
+    ctx.shadowColor = "rgba(106,252,242,0.7)";
+    ctx.shadowBlur = 14;
+    ctx.lineWidth = 3.8;
+    ctx.beginPath();
+    let currentLen = s.len * stemGrowProgress;
+    ctx.moveTo(baseX, baseY);
+    ctx.quadraticCurveTo(
+      baseX + s.curve * stemGrowProgress,
+      baseY - currentLen / 2,
+      baseX + s.dx * stemGrowProgress + s.flowerX * stemGrowProgress,
+      baseY - currentLen
+    );
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  });
+
+  stems.forEach(s => {
+    [0.28, 0.55].forEach((t, i) => {
+      let pos = getPointOnStem(baseX, baseY, s.dx * stemGrowProgress, s.len * stemGrowProgress, s.curve * stemGrowProgress, s.flowerX * stemGrowProgress, -s.len * stemGrowProgress, t);
+      let angle = (i === 0 ? Math.PI / 6 : -Math.PI / 6);
+      let flip = (s.dx > 0) ? (i === 0) : (i === 1);
+      drawElegantLeaf(pos.x, pos.y, 36, angle, flip, 0.87);
+    });
+  });
+
+  stems.forEach(s => {
+    let flowerX = baseX + s.dx * stemGrowProgress + s.flowerX * stemGrowProgress;
+    let flowerY = baseY - s.len * stemGrowProgress;
+    drawFlowerHead(flowerX, flowerY, s.flowerScale, openProgress, 6);
+  });
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+  </script>
+</body>
+</html>
